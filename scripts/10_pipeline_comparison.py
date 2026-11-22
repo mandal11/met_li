@@ -47,11 +47,78 @@ def fit_alt_raw(fr, z, rng, n=12, max_nfev=4000):
 
 def ea(TK, R): return arrhenius(TK, R)[0]
 
+
+def kk_passed_datasets(datasets):
+    audit_paths = [os.path.join(OUT, 'kk_audit.partial.csv'),
+                   os.path.join(OUT, 'kk_audit.csv')]
+    available_audits = [path for path in audit_paths if os.path.exists(path)]
+    audit_path = max(available_audits, key=os.path.getmtime) if available_audits else None
+    if audit_path is None:
+        print("[skip] datasets: no KK audit results available")
+        return [item for item in datasets if item[1] is None]
+
+    audit = pd.read_csv(audit_path)
+    required = {'source', 'T', 'KK_status'}
+    if not required.issubset(audit.columns):
+        print(f"[skip] datasets: {os.path.basename(audit_path)} is missing KK audit columns")
+        return [item for item in datasets if item[1] is None]
+
+    audit_sources = {
+        'file A': '6-T file A',
+        'file B': '6-T file B',
+        'in-house HE2': 'in-house HE2',
+        'in-house VTC5A': 'in-house VTC5A',
+    }
+
+    def normalize_temperature(value):
+        try:
+            numeric = float(value)
+            if numeric.is_integer():
+                return str(int(numeric))
+        except (TypeError, ValueError):
+            pass
+        return str(value).strip()
+
+    eligible = []
+    expected_temps = {normalize_temperature(t) for t in SHEETS}
+    for item in datasets:
+        name, path = item[:2]
+        if path is None:
+            eligible.append(item)
+            continue
+        audit_source = audit_sources.get(name)
+        if audit_source is None:
+            print(f"[skip] {name}: no KK audit source mapping")
+            continue
+        rows = audit[audit.source.astype(str).str.strip() == audit_source].copy()
+        if rows.empty:
+            print(f"[skip] {name}: no KK audit rows; dataset excluded")
+            continue
+        rows['_temp'] = rows['T'].map(normalize_temperature)
+        statuses = rows['KK_status'].astype(str).str.strip().str.lower()
+        failures = rows.loc[statuses.eq('fail'), '_temp'].unique().tolist()
+        if failures:
+            print(f"[skip] {name}: KK failure at {', '.join(failures)}; whole dataset excluded")
+            continue
+        missing_temps = expected_temps - set(rows['_temp'])
+        if missing_temps or not statuses.eq('pass').all():
+            missing = ', '.join(sorted(missing_temps, key=lambda t: float(t)))
+            detail = f"missing audit temperatures {missing}" if missing else "non-pass KK status"
+            print(f"[skip] {name}: {detail}; whole dataset excluded")
+            continue
+        eligible.append(item)
+    available_count = sum(path is not None for _, path, *_ in datasets)
+    eligible_count = sum(path is not None for _, path, *_ in eligible)
+    print(f"KK audit: {eligible_count} of {available_count} available input datasets eligible.")
+    return eligible
+
+
 if __name__ == '__main__':
-    datasets = [('file A', SIXT_FILE_A, 1e-3, True),
-                ('file B', SIXT_FILE_B, 1e-3, True),
-                ('in-house HE2', INHOUSE_HE2, 1.0, False),
-                ('in-house VTC5A', INHOUSE_VTC5A, 1.0, False)]
+    all_datasets = [('file A', SIXT_FILE_A, 1e-3, True),
+                    ('file B', SIXT_FILE_B, 1e-3, True),
+                    ('in-house HE2', INHOUSE_HE2, 1.0, False),
+                    ('in-house VTC5A', INHOUSE_VTC5A, 1.0, False)]
+    datasets = kk_passed_datasets(all_datasets)
     cache_dir = os.path.join(OUT, '.cache_pipeline'); os.makedirs(cache_dir, exist_ok=True)
     # the cache is keyed to the exact eislib source, so fits made by an earlier version of the
     # fitting procedure are never reused after eislib changes
@@ -123,7 +190,8 @@ if __name__ == '__main__':
         print(f"  {name}: done in {time.time()-t0:.0f}s  label_term(med) {rows[-1]['label_term']}"
               f"  residual_term(med) {rows[-1]['residual_term']}", flush=True)
     df = pd.DataFrame(rows)
-    complete = (len(rows) == len(datasets))
+    eligible_count = sum(path is not None for _, path, *_ in datasets)
+    complete = (len(rows) == eligible_count)
     needs = ("all four six-setpoint datasets: data/inhouse/{Samsung,Panasonic,LGHE2,"
              "all_temp_sony}.xlsx (S1/S2, DOI [A])")
     if safe_write(df, 'pipeline_comparison.csv', complete, needs) is None:

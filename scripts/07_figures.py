@@ -1,7 +1,10 @@
-"""Regenerates manuscript Figs 1-10 into <repo>/figs.
+"""Regenerates manuscript figures into <repo>/figs.
 
-Every figure is a function guarded by the data it needs: figures whose sources
-are not present locally are skipped with a message instead of crashing the run.
+Figure 4 is always written: each panel uses whatever valid input data is
+available, and unavailable panels are labeled rather than suppressing the
+whole figure. Its measured-source panels include only complete all-pass
+sources from out/kk_audit.csv and omit categories missing required values.
+Other figures retain their existing input checks.
 Prerequisites: scripts 01-03 (for out/*.csv and out/unisa_parsed.pkl).
 """
 import os, sys, pickle
@@ -851,13 +854,13 @@ def fig3v2():
     ax[0].axvline(10, color='gray', ls='--', lw=1); ax[0].axhline(2, color='gray', ls=':', lw=1)
     ax[0].set_ylim(0.08, 30); ax[0].set_xscale('log'); ax[0].set_yscale('log')
     
-    ax[0].text(10.6, 12, '10–15 mV\nconvention', fontsize=10, color='dimgray', va='center', ha='left')
-    ax[0].text(30, 17, 'observed\nonset', fontsize=10, color='dimgray', va='center', ha='center')
-    ax[0].set_xlabel('peak voltage response $I_{ac}\\,|Z|_{max}$ (mV)', fontsize=14)
-    ax[0].set_ylabel('KK residual ρ (%)', fontsize=14)
-    ax[0].tick_params(axis='both', labelsize=13)
-    ax[0].set_title('(a) Documented amplitudes', fontsize=15)
-    ax[0].legend(fontsize=9, loc='lower right', framealpha=.95); ax[0].grid(alpha=.3)
+    ax[0].text(10.6, 12, '10–15 mV\nconvention', fontsize=12, color='dimgray', va='center', ha='left')
+    ax[0].text(30, 17, 'observed\nonset', fontsize=12, color='dimgray', va='center', ha='center')
+    ax[0].set_xlabel('peak voltage response $I_{ac}\\,|Z|_{max}$ (mV)', fontsize=16)
+    ax[0].set_ylabel('KK residual ρ (%)', fontsize=16)
+    ax[0].tick_params(axis='both', labelsize=16)
+    ax[0].set_title('(a) Documented amplitudes', fontsize=16)
+    ax[0].legend(fontsize=12, loc='lower right', framealpha=.95); ax[0].grid(alpha=.3)
     bars = [(INHOUSE_HE2, 'HE2 (0.5 A)', 'crimson', {}),
             (SIXT_FILE_A, 'S2a (amplitude n/d)', 'darkred', dict(scale=1e-3, imag_flip=True)),
             (SIXT_FILE_B, 'S2b (amplitude n/d)', 'seagreen', dict(scale=1e-3, imag_flip=True))]
@@ -867,340 +870,516 @@ def fig3v2():
         vals = [linkk(*load(f, t, **kw)) for t in TEMPS_IH]
         ax[1].bar(np.arange(len(TEMPS_IH))+i2*width, vals, width, color=c, label=lab)
     ax[1].axhline(2, color='gray', ls=':'); ax[1].set_xticks(np.arange(len(TEMPS_IH))+width)
-    ax[1].set_xticklabels(TEMPS_IH, fontsize=13)
-    ax[1].tick_params(axis='both', labelsize=13)
-    ax[1].set_xlabel('temperature (°C)', fontsize=14)
-    ax[1].set_ylabel('KK residual ρ (%)', fontsize=14)
-    ax[1].set_title('(b) Residual by temperature', fontsize=15)
-    if bars: ax[1].legend(fontsize=10)
+    ax[1].set_xticklabels(TEMPS_IH, fontsize=16)
+    ax[1].tick_params(axis='both', labelsize=16)
+    ax[1].set_xlabel('temperature (°C)', fontsize=16)
+    ax[1].set_ylabel('KK residual ρ (%)', fontsize=16)
+    ax[1].set_title('(b) Residual by temperature', fontsize=16)
+    if bars: ax[1].legend(fontsize=12)
     if have(INHOUSE_VTC5A):
         for a, t, ttl in [(ax[2], '25', '(c) VTC5A, 25 °C (pass)'), (ax[3], '-10', '(d) VTC5A, −10 °C (fail)')]:
             fr, z = load(INHOUSE_VTC5A, t)
             rr, ri = linkk(fr, z, ret_spec=True)
             a.semilogx(fr, rr, '.-', label='Re'); a.semilogx(fr, ri, '.-', label='Im')
-            a.set_title(ttl, fontsize=15); a.axhline(0, color='k', lw=.6); a.axhspan(-2, 2, color='gray', alpha=.15)
+            a.set_title(ttl, fontsize=16); a.axhline(0, color='k', lw=.6); a.axhspan(-2, 2, color='gray', alpha=.15)
             a.tick_params(axis='both', labelsize=13)
-            a.set_xlabel('f (Hz)', fontsize=14); a.set_ylabel('KK residual (% of |Z|)', fontsize=14); a.legend(fontsize=10)
+            a.set_xlabel('f (Hz)', fontsize=16); a.set_ylabel('KK residual (% of |Z|)', fontsize=16); a.legend(fontsize=12)
         ax[2].set_ylim(-3, 3)
     save(fig, 'Fig3v2_kk_audit.png')
     save(fig, 'Fig3v2_kk_audit.pdf')
 ###############################
-def fig3():
-    """Create Fig. 3 as four separate plots:
-    (a) amplitude axis,
-    (b) residual vs temperature,
-    (c) representative KK residual spectrum at 25 °C,
-    (d) representative KK residual spectrum at −10 °C.
-    """
+# def fig3():
+#     """Create Fig. 3 as four separate plots:
+#     (a) amplitude axis,
+#     (b) residual vs temperature,
+#     (c) representative KK residual spectrum at 25 °C,
+#     (d) representative KK residual spectrum at −10 °C.
+#     """
 
-    # ============================================================
-    # (a) Linearity audit — documented amplitudes
-    # ============================================================
-    pts = []
+#     # ============================================================
+#     # (a) Linearity audit — documented amplitudes
+#     # ============================================================
+#     pts = []
 
-    for f, lab, c, m in [
-        (INHOUSE_HE2, 'in-house HE2 (0.5 A)', 'crimson', 'o'),
-        (INHOUSE_VTC5A, 'in-house VTC5A (0.5 A)', 'firebrick', 'D')
-    ]:
-        if not have(f):
-            continue
+#     for f, lab, c, m in [
+#         (INHOUSE_HE2, 'in-house HE2 (0.5 A)', 'crimson', 'o'),
+#         (INHOUSE_VTC5A, 'in-house VTC5A (0.5 A)', 'firebrick', 'D')
+#     ]:
+#         if not have(f):
+#             continue
 
-        for t in TEMPS_IH:
-            fr, z = load(f, t)
-            pts.append((
-                0.5 * np.abs(z).max() * 1e3,
-                linkk(fr, z),
-                c,
-                m,
-                lab if t == '-10' else None
-            ))
+#         for t in TEMPS_IH:
+#             fr, z = load(f, t)
+#             pts.append((
+#                 0.5 * np.abs(z).max() * 1e3,
+#                 linkk(fr, z),
+#                 c,
+#                 m,
+#                 lab if t == '-10' else None
+#             ))
 
-    for T in TS:
-        s_ = ALL[T][len(ALL[T]) // 2]
-        pts.append((
-            0.15 * np.abs(s_[2]).max() * 1e3,
-            linkk(s_[1], s_[2]),
-            'royalblue',
-            '^',
-            'reference corpus (0.106 A rms)' if T == TS[0] else None
-        ))
+#     for T in TS:
+#         s_ = ALL[T][len(ALL[T]) // 2]
+#         pts.append((
+#             0.15 * np.abs(s_[2]).max() * 1e3,
+#             linkk(s_[1], s_[2]),
+#             'royalblue',
+#             '^',
+#             'reference corpus (0.106 A rms)' if T == TS[0] else None
+#         ))
 
-    _need = [
-        have(INHOUSE_HE2),
-        have(INHOUSE_VTC5A),
-        have(SIXT_FILE_A),
-        have(SIXT_FILE_B)
-    ]
+#     _need = [
+#         have(INHOUSE_HE2),
+#         have(INHOUSE_VTC5A),
+#         have(SIXT_FILE_A),
+#         have(SIXT_FILE_B)
+#     ]
 
-    if not pts:
-        print("[skip] Fig 3: no spectra available")
-        return
+#     if not pts:
+#         print("[skip] Fig 3: no spectra available")
+#         return
 
-    if not all(_need):
-        print(
-            "[skip] Fig 3: needs both in-house workbooks AND both "
-            "six-setpoint files; a corpus-only panel would omit the "
-            "amplitude boundary that Fig. 3 exists to show. "
-            "Released Fig3_kk_audit.png left untouched."
-        )
-        return
+#     if not all(_need):
+#         print(
+#             "[skip] Fig 3: needs both in-house workbooks AND both "
+#             "six-setpoint files; a corpus-only panel would omit the "
+#             "amplitude boundary that Fig. 3 exists to show. "
+#             "Released Fig3_kk_audit.png left untouched."
+#         )
+#         return
 
-    fig, ax = plt.subplots(figsize=(5.2, 4.0))
+#     fig, ax = plt.subplots(figsize=(5.2, 4.0))
 
-    for x, y, c, m, lab in pts:
-        ax.scatter(
-            x, max(y, .05),
-            c=c,
-            marker=m,
-            s=30,
-            label=lab,
-            alpha=.85,
-            edgecolors='none'
-        )
+#     for x, y, c, m, lab in pts:
+#         ax.scatter(
+#             x, max(y, .05),
+#             c=c,
+#             marker=m,
+#             s=30,
+#             label=lab,
+#             alpha=.85,
+#             edgecolors='none'
+#         )
 
-    ax.axvspan(27, 34, color='gray', alpha=.18)
-    ax.axvline(10, color='gray', ls='--', lw=1)
-    ax.axhline(2, color='gray', ls=':', lw=1)
+#     ax.axvspan(27, 34, color='gray', alpha=.18)
+#     ax.axvline(10, color='gray', ls='--', lw=1)
+#     ax.axhline(2, color='gray', ls=':', lw=1)
 
-    ax.set_ylim(0.08, 30)
-    ax.set_xscale('log')
-    ax.set_yscale('log')
+#     ax.set_ylim(0.08, 30)
+#     ax.set_xscale('log')
+#     ax.set_yscale('log')
 
-    ax.annotate(
-        '10-15 mV\nconvention',
-        xy=(10, 15),
-        xytext=(4.5, 16),
-        fontsize=7,
-        color='dimgray',
-        va='center',
-        ha='center'
-    )
+#     ax.annotate(
+#         '10-15 mV\nconvention',
+#         xy=(10, 15),
+#         xytext=(4.5, 16),
+#         fontsize=7,
+#         color='dimgray',
+#         va='center',
+#         ha='center'
+#     )
 
-    ax.annotate(
-        'observed onset\n27-34 mV',
-        xy=(30, 0.35),
-        xytext=(30, 0.15),
-        fontsize=7,
-        color='dimgray',
-        ha='center'
-    )
+#     ax.annotate(
+#         'observed onset\n27-34 mV',
+#         xy=(30, 0.35),
+#         xytext=(30, 0.15),
+#         fontsize=7,
+#         color='dimgray',
+#         ha='center'
+#     )
 
-    ax.set_xlabel('peak voltage response $I_{ac}\\,|Z|_{max}$ (mV)', fontsize=17)
-    ax.set_ylabel('KK-consistency residual ρ (% of |Z|)', fontsize=17)
-    ax.set_title('Linearity audit, documented amplitudes', fontsize=17)
-    # ax.ticks(axis=both, fontsize=17)
-    ax.legend(fontsize=10)
-    ax.grid(alpha=.3)
+#     ax.set_xlabel('peak voltage response $I_{ac}\\,|Z|_{max}$ (mV)', fontsize=17)
+#     ax.set_ylabel('KK-consistency residual ρ (% of |Z|)', fontsize=17)
+#     ax.set_title('Linearity audit, documented amplitudes', fontsize=17)
+#     # ax.ticks(axis=both, fontsize=17)
+#     ax.legend(fontsize=10)
+#     ax.grid(alpha=.3)
 
-    save(fig, 'Fig3a_kk_linearity_audit.png')
-    # (a)
-    fig.savefig(os.path.join(FIGS, 'Fig3a_kk_linearity_audit.pdf'), bbox_inches='tight')
-    plt.close(fig)
-    plt.close(fig)
+#     save(fig, 'Fig3a_kk_linearity_audit.png')
+#     # (a)
+#     fig.savefig(os.path.join(FIGS, 'Fig3a_kk_linearity_audit.pdf'), bbox_inches='tight')
+#     plt.close(fig)
+#     plt.close(fig)
 
 
-    # ============================================================
-    # (b) Residuals by temperature
-    # ============================================================
-    bars = [
-        (INHOUSE_HE2, 'in-house HE2 (0.5 A)', 'crimson', {}),
-        (SIXT_FILE_A, 'file A (amplitude n/d)', 'darkred',
-         dict(scale=1e-3, imag_flip=True)),
-        (SIXT_FILE_B, 'file B (amplitude n/d)', 'seagreen',
-         dict(scale=1e-3, imag_flip=True))
-    ]
+#     # ============================================================
+#     # (b) Residuals by temperature
+#     # ============================================================
+#     bars = [
+#         (INHOUSE_HE2, 'in-house HE2 (0.5 A)', 'crimson', {}),
+#         (SIXT_FILE_A, 'file A (amplitude n/d)', 'darkred',
+#          dict(scale=1e-3, imag_flip=True)),
+#         (SIXT_FILE_B, 'file B (amplitude n/d)', 'seagreen',
+#          dict(scale=1e-3, imag_flip=True))
+#     ]
 
-    bars = [b for b in bars if have(b[0])]
+#     bars = [b for b in bars if have(b[0])]
 
-    fig, ax = plt.subplots(figsize=(5.2, 4.0))
+#     fig, ax = plt.subplots(figsize=(5.2, 4.0))
 
-    width = .8 / max(len(bars), 1)
+#     width = .8 / max(len(bars), 1)
 
-    for i2, (f, lab, c, kw) in enumerate(bars):
-        vals = [
-            linkk(*load(f, t, **kw))
-            for t in TEMPS_IH
-        ]
+#     for i2, (f, lab, c, kw) in enumerate(bars):
+#         vals = [
+#             linkk(*load(f, t, **kw))
+#             for t in TEMPS_IH
+#         ]
 
-        ax.bar(
-            np.arange(len(TEMPS_IH)) + i2 * width,
-            vals,
-            width,
-            color=c,
-            label=lab
-        )
+#         ax.bar(
+#             np.arange(len(TEMPS_IH)) + i2 * width,
+#             vals,
+#             width,
+#             color=c,
+#             label=lab
+#         )
 
-    ax.axhline(2, color='gray', ls=':')
+#     ax.axhline(2, color='gray', ls=':')
 
-    ax.set_xticks(
-        np.arange(len(TEMPS_IH)) + width
-    )
+#     ax.set_xticks(
+#         np.arange(len(TEMPS_IH)) + width
+#     )
 
-    ax.set_xticklabels(
-        [l + '°C' for l in TEMPS_IH],
-        fontsize=17
-    )
+#     ax.set_xticklabels(
+#         [l + '°C' for l in TEMPS_IH],
+#         fontsize=17
+#     )
 
-    ax.set_ylabel('KK-consistency residual ρ (%)', fontsize=17)
-    ax.set_title('Residuals by temperature', fontsize=17)
-    ax.tick_params(axis='y', labelsize=17)
+#     ax.set_ylabel('KK-consistency residual ρ (%)', fontsize=17)
+#     ax.set_title('Residuals by temperature', fontsize=17)
+#     ax.tick_params(axis='y', labelsize=17)
 
-    if bars:
-        ax.legend(fontsize=10)
+#     if bars:
+#         ax.legend(fontsize=10)
 
-    save(fig, 'Fig3b_kk_residual_temperature.png')
+#     save(fig, 'Fig3b_kk_residual_temperature.png')
     
 
-        # (b)
-    fig.savefig(os.path.join(FIGS, 'Fig3b_kk_residual_temperature.pdf'), bbox_inches='tight')
-    plt.close(fig)
-    plt.close(fig)
+#         # (b)
+#     fig.savefig(os.path.join(FIGS, 'Fig3b_kk_residual_temperature.pdf'), bbox_inches='tight')
+#     plt.close(fig)
+#     plt.close(fig)
 
 
-    # ============================================================
-    # (c) VTC5A 25 °C — pass
-    # ============================================================
-    if have(INHOUSE_VTC5A):
+#     # ============================================================
+#     # (c) VTC5A 25 °C — pass
+#     # ============================================================
+#     if have(INHOUSE_VTC5A):
 
-        fr, z = load(INHOUSE_VTC5A, '25')
-        rr, ri = linkk(fr, z, ret_spec=True)
+#         fr, z = load(INHOUSE_VTC5A, '25')
+#         rr, ri = linkk(fr, z, ret_spec=True)
 
-        fig, ax = plt.subplots(figsize=(5.2, 4.0))
+#         fig, ax = plt.subplots(figsize=(5.2, 4.0))
 
-        ax.semilogx(
-            fr, rr, '.-',
-            label='Re'
-        )
+#         ax.semilogx(
+#             fr, rr, '.-',
+#             label='Re'
+#         )
 
-        ax.semilogx(
-            fr, ri, '.-',
-            label='Im'
-        )
+#         ax.semilogx(
+#             fr, ri, '.-',
+#             label='Im'
+#         )
 
-        ax.set_title('VTC5A 25 °C — pass', fontsize=17)
-        ax.axhline(0, color='k', lw=.6)
-        ax.axhspan(-2, 2, color='gray', alpha=.15)
+#         ax.set_title('VTC5A 25 °C — pass', fontsize=17)
+#         ax.axhline(0, color='k', lw=.6)
+#         ax.axhspan(-2, 2, color='gray', alpha=.15)
 
-        ax.set_xlabel('f (Hz)', fontsize=17)
-        ax.set_ylabel('KK residual (% of |Z|)', fontsize=17)
-        ax.tick_params(axis='both', labelsize=18)
-        ax.legend(fontsize=12)
+#         ax.set_xlabel('f (Hz)', fontsize=17)
+#         ax.set_ylabel('KK residual (% of |Z|)', fontsize=17)
+#         ax.tick_params(axis='both', labelsize=18)
+#         ax.legend(fontsize=12)
 
-        ax.set_ylim(-3, 3)
+#         ax.set_ylim(-3, 3)
         
 
-        # (c)
-        fig.savefig(os.path.join(FIGS, 'Fig3c_VTC5A_25C_KK.pdf'), bbox_inches='tight')
-        plt.close(fig)
-        save(fig, 'Fig3c_VTC5A_25C_KK.png')
-        plt.close(fig)
+#         # (c)
+#         fig.savefig(os.path.join(FIGS, 'Fig3c_VTC5A_25C_KK.pdf'), bbox_inches='tight')
+#         plt.close(fig)
+#         save(fig, 'Fig3c_VTC5A_25C_KK.png')
+#         plt.close(fig)
 
 
-        # ========================================================
-        # (d) VTC5A −10 °C — fail
-        # ========================================================
-        fr, z = load(INHOUSE_VTC5A, '-10')
-        rr, ri = linkk(fr, z, ret_spec=True)
+#         # ========================================================
+#         # (d) VTC5A −10 °C — fail
+#         # ========================================================
+#         fr, z = load(INHOUSE_VTC5A, '-10')
+#         rr, ri = linkk(fr, z, ret_spec=True)
 
-        fig, ax = plt.subplots(figsize=(5.2, 4.0))
+#         fig, ax = plt.subplots(figsize=(5.2, 4.0))
 
-        ax.semilogx(
-            fr, rr, '.-',
-            label='Re'
-        )
+#         ax.semilogx(
+#             fr, rr, '.-',
+#             label='Re'
+#         )
 
-        ax.semilogx(
-            fr, ri, '.-',
-            label='Im'
-        )
+#         ax.semilogx(
+#             fr, ri, '.-',
+#             label='Im'
+#         )
 
-        ax.set_title('VTC5A −10 °C — fail', fontsize=17)
-        ax.axhline(0, color='k', lw=.6)
-        ax.axhspan(-2, 2, color='gray', alpha=.15)
+#         ax.set_title('VTC5A −10 °C — fail', fontsize=17)
+#         ax.axhline(0, color='k', lw=.6)
+#         ax.axhspan(-2, 2, color='gray', alpha=.15)
 
-        ax.set_xlabel('f (Hz)')
-        ax.set_ylabel('KK residual (% of |Z|)', fontsize=17)
-        ax.tick_params(axis='both', labelsize=18)
-        ax.legend(fontsize=12)
+#         ax.set_xlabel('f (Hz)')
+#         ax.set_ylabel('KK residual (% of |Z|)', fontsize=17)
+#         ax.tick_params(axis='both', labelsize=18)
+#         ax.legend(fontsize=12)
 
-        # ax.set_ylim(-3, 3)
+#         # ax.set_ylim(-3, 3)
 
-        save(fig, 'Fig3d_VTC5A_minus10C_KK.png')
+#         save(fig, 'Fig3d_VTC5A_minus10C_KK.png')
 
         
 
-        # (d)
-        fig.savefig(os.path.join(FIGS, 'Fig3d_VTC5A_minus10C_KK.pdf'), bbox_inches='tight')
-        plt.close(fig)
-        plt.close(fig)
+#         # (d)
+#         fig.savefig(os.path.join(FIGS, 'Fig3d_VTC5A_minus10C_KK.pdf'), bbox_inches='tight')
+#         plt.close(fig)
+#         plt.close(fig)
         #################################
 # ------------------------------------------------------------------ Fig 4
 SHORT = {'file A': 'S2a', 'file B': 'S2b', 'in-house HE2': 'HE2', 'in-house VTC5A': 'VTC5A'}
 
 
+# def _fig4_all_inputs_legacy():
+#     comp = csv('pipeline_comparison.csv'); mc = csv('mc_identifiability.csv')
+#     enum = csv('label_enumeration.csv')
+#     if (comp is None or len(comp) < 4 or mc is None or enum is None or len(enum) < 4
+#             or not have(LGM50_FITS)):
+#         print("[skip] Fig 4: the released figure has four panels and needs ALL of "
+#               "out/mc_identifiability.csv, out/label_enumeration.csv (script 13), a complete "
+#               "out/pipeline_comparison.csv (script 11, all four datasets) and "
+#               "data/corpora/all_ecm_SoH_temp.xlsx for panel (d). "
+#               "Released Fig4_identifiability.png left untouched."); return
+#     enum = enum.set_index('source').loc[list(comp.source)].reset_index()
+#     ncol = (mc is not None) + 2*(comp is not None) + have(LGM50_FITS)
+#     fig, ax = plt.subplots(1, ncol, figsize=(3.9*ncol, 3.7)); k = 0
+#     if mc is not None:
+#         x = np.arange(len(mc)); w = .38
+#         ax[k].bar(x-w/2, mc.one_start, w, label='single start, no ordering', color='indianred')
+#         ax[k].bar(x+w/2, mc.six_starts_ordered, w, label='multi-start + canonicalized', color='steelblue')
+#         ax[k].set_xticks(x); ax[k].set_xticklabels(mc.sep)
+#         # ax[k].set_yticklabels(mc.sep, labelsize=14)
+#         ax[k].tick_params(axis='both', labelsize=12)
+#         ax[k].axvspan(-0.5, 0.5, color='gray', alpha=.15)
+#         ax[k].text(0, max(mc.one_start)*1.04, 'non-identifiable\nregime', fontsize=9, ha='center', va='bottom', color='black')
+#         ax[k].set_ylim(0, max(mc.one_start)*1.3)
+#         ax[k].set_xlabel(r'time-constant separation $\tau_2/\tau_1$', fontsize=14)
+#         ax[k].set_ylabel('gross failure rate (%)', fontsize=16)
+#         ax[k].set_title('(a) Synthetic ground truth:\nremedies and their limit', fontsize=12); ax[k].legend(fontsize=10.5)
+#         k += 1
+#     if comp is not None:
+#         # Panel (b): the label term is the EXACT enumerated bound over all 2^k labellings
+#         # (script 13), not a sampled estimate - so this panel is platform-invariant and
+#         # matches Table 4. The admissible interval is drawn as a vertical span.
+#         x = np.arange(len(comp)); w = .38
+#         lo = enum.Ea_min_over_labels.values; hi = enum.Ea_max_over_labels.values
+#         can = enum.Ea_Rct_canonical.values
+#         ax[k].vlines(x-w/2, lo, hi, color='indianred', lw=7, alpha=.35,
+#                      label='admissible range, \nall $2^6$ labellings')
+#         ax[k].plot(x-w/2, can, 'o', color='indianred', ms=5, label='canonical labelling')
+#         for xi, c, l, h in zip(x-w/2, can, lo, hi):
+#             ax[k].annotate(f'{max(h-c, c-l):.1f}', (xi, h), textcoords='offset points',
+#                            xytext=(0, 8), ha='center', fontsize=10, color='indianred')
+#         ax[k].bar(x+w/2, comp.residual_term, w*0.8, color='steelblue',
+#                   label='near-degenerate solutions')
+#         ax[k].set_xticks(x); ax[k].set_xticklabels([SHORT.get(x, x) for x in comp.source], rotation=20, ha='right', fontsize=14)
+#         ax[k].set_ylabel('$E_a(R_{ct})$ and $|\\Delta E_a|$ (kJ mol$^{-1}$)', fontsize=14)
+#         ax[k].set_title('(b) Label degeneracy (exact)\nand near-degeneracy (measured)', fontsize=14)
+#         ax[k].legend(fontsize=10); k += 1
+#         ax[k].bar(x-w/2, comp.Ea_Rohm_reference, w, label='reference pipeline', color='seagreen')
+#         ax[k].bar(x+w/2, comp.Ea_Rohm_naive_raw, w, label='alternative pipeline', color='darkkhaki')
+#         ax[k].set_xticks(x); ax[k].set_xticklabels([SHORT.get(x, x) for x in comp.source], rotation=30, ha='right', fontsize=14)
+#         ax[k].set_ylabel('$E_a(R_{ohm})$ (kJ mol$^{-1}$)', fontsize=14)
+#         ax[k].set_title('(c) Ohmic channel is pipeline-invariant', fontsize=14); ax[k].legend(fontsize=10); k += 1
+#     if have(LGM50_FITS):
+#         d3 = pd.read_excel(LGM50_FITS, sheet_name='Sheet3')
+#         d3.columns = [str(c).strip() for c in d3.columns]
+#         srow = d3[(d3['SoH'] == 100) & (d3['SoC'] == 95) & (d3['Temp'] == 25)].reset_index()
+#         idx = np.arange(len(srow))
+#         ax[k].bar(idx-0.18, srow['Rsei']*1e3, 0.36, label='$R_{sei}$')
+#         ax[k].bar(idx+0.18, srow['Rct']*1e3, 0.36, label='$R_{ct}$')
+#         ax[k].set_xticks(idx); ax[k].set_xticklabels([f'{i+1}' for i in idx], fontsize=14)
+#         ax[k].set_xlabel('cell', fontsize=14); ax[k].set_ylabel('fitted R (mΩ)', fontsize=14)
+#         ax[k].set_title('(d) Label swaps in a\npublished parameter set', fontsize=14); ax[k].legend(fontsize=10)
+#     save(fig, 'Fig4_identifiability.png')
+#     save(fig, 'Fig4_identifiability.pdf')
+
+
 def fig4():
-    comp = csv('pipeline_comparison.csv'); mc = csv('mc_identifiability.csv')
+    comp = csv('pipeline_comparison.csv')
+    mc = csv('mc_identifiability.csv')
     enum = csv('label_enumeration.csv')
-    if (comp is None or len(comp) < 4 or mc is None or enum is None or len(enum) < 4
-            or not have(LGM50_FITS)):
-        print("[skip] Fig 4: the released figure has four panels and needs ALL of "
-              "out/mc_identifiability.csv, out/label_enumeration.csv (script 13), a complete "
-              "out/pipeline_comparison.csv (script 11, all four datasets) and "
-              "data/corpora/all_ecm_SoH_temp.xlsx for panel (d). "
-              "Released Fig4_identifiability.png left untouched."); return
-    enum = enum.set_index('source').loc[list(comp.source)].reset_index()
-    ncol = (mc is not None) + 2*(comp is not None) + have(LGM50_FITS)
-    fig, ax = plt.subplots(1, ncol, figsize=(3.9*ncol, 3.7)); k = 0
-    if mc is not None:
-        x = np.arange(len(mc)); w = .38
-        ax[k].bar(x-w/2, mc.one_start, w, label='single start, no ordering', color='indianred')
-        ax[k].bar(x+w/2, mc.six_starts_ordered, w, label='multi-start + canonicalized', color='steelblue')
-        ax[k].set_xticks(x); ax[k].set_xticklabels(mc.sep)
-        # ax[k].set_yticklabels(mc.sep, labelsize=14)
-        ax[k].tick_params(axis='both', labelsize=12)
-        ax[k].axvspan(-0.5, 0.5, color='gray', alpha=.15)
-        ax[k].text(0, max(mc.one_start)*1.04, 'non-identifiable\nregime', fontsize=9, ha='center', va='bottom', color='black')
-        ax[k].set_ylim(0, max(mc.one_start)*1.3)
-        ax[k].set_xlabel(r'time-constant separation $\tau_2/\tau_1$', fontsize=14)
-        ax[k].set_ylabel('gross failure rate (%)', fontsize=14)
-        ax[k].set_title('(a) Synthetic ground truth:\nremedies and their limit', fontsize=14); ax[k].legend(fontsize=9)
-        k += 1
-    if comp is not None:
-        # Panel (b): the label term is the EXACT enumerated bound over all 2^k labellings
-        # (script 13), not a sampled estimate - so this panel is platform-invariant and
-        # matches Table 4. The admissible interval is drawn as a vertical span.
-        x = np.arange(len(comp)); w = .38
-        lo = enum.Ea_min_over_labels.values; hi = enum.Ea_max_over_labels.values
-        can = enum.Ea_Rct_canonical.values
-        ax[k].vlines(x-w/2, lo, hi, color='indianred', lw=7, alpha=.35,
-                     label='admissible range, \nall $2^6$ labellings')
-        ax[k].plot(x-w/2, can, 'o', color='indianred', ms=5, label='canonical labelling')
-        for xi, c, l, h in zip(x-w/2, can, lo, hi):
-            ax[k].annotate(f'{max(h-c, c-l):.1f}', (xi, h), textcoords='offset points',
-                           xytext=(0, 8), ha='center', fontsize=10, color='indianred')
-        ax[k].bar(x+w/2, comp.residual_term, w*0.8, color='steelblue',
+    kk = csv('kk_audit.csv')
+    fig, ax = plt.subplots(1, 4, figsize=(15.6, 3.9))
+
+    def unavailable(axis, message):
+        axis.set_axis_off()
+        axis.text(.5, .5, message, ha='center', va='center', wrap=True,
+                  transform=axis.transAxes, fontsize=10)
+
+    kk_source_map = {
+        'file A': '6-T file A',
+        'file B': '6-T file B',
+        'in-house HE2': 'in-house HE2',
+        'in-house VTC5A': 'in-house VTC5A',
+    }
+    kk_pass_sources = set()
+    if kk is not None and {'source', 'T', 'KK_status'}.issubset(kk.columns):
+        expected_temps = set(TEMPS_IH)
+        # Figure 4 reports source-level Ea values aggregated across temperatures.
+        for source, audit_source in kk_source_map.items():
+            audited = kk[kk.source.astype(str).str.strip() == audit_source].copy()
+            audited['T'] = audited['T'].astype(str).str.strip()
+            statuses = audited.KK_status.astype(str).str.strip().str.lower()
+            complete = expected_temps.issubset(set(audited['T']))
+            if complete and len(audited) >= len(expected_temps) and statuses.eq('pass').all():
+                kk_pass_sources.add(source)
+            else:
+                n_fail = int(statuses.eq('fail').sum())
+                if n_fail:
+                    print(f"[Fig 4] excluding {source}: {n_fail} KK-fail spectrum(s).")
+                else:
+                    print(f"[Fig 4] excluding {source}: complete all-pass KK audit unavailable.")
+    else:
+        print("[Fig 4] KK audit unavailable; omitting measured-source levels.")
+
+    if mc is not None and {'sep', 'one_start', 'six_starts_ordered'}.issubset(mc.columns):
+        m = mc[['sep', 'one_start', 'six_starts_ordered']].copy()
+        for col in ['sep', 'one_start', 'six_starts_ordered']:
+            m[col] = pd.to_numeric(m[col], errors='coerce')
+        m = m.dropna()
+    else:
+        m = pd.DataFrame()
+    if len(m):
+        x = np.arange(len(m)); w = .38
+        ax[0].bar(x-w/2, m.one_start, w, label='single start, no ordering', color='indianred')
+        ax[0].bar(x+w/2, m.six_starts_ordered, w, label='multi-start + canonicalized', color='steelblue')
+        ax[0].set_xticks(x), ax[0].set_xticklabels(m.sep)
+        ax[0].tick_params(axis='both', labelsize=16)
+        ax[0].axvspan(-0.5, 0.5, color='gray', alpha=.15)
+        ax[0].text(0, max(m.one_start)*1.04, 'non-identifiable\nregime', fontsize=10,
+                   ha='center', va='bottom', color='black')
+        ax[0].set_ylim(0, max(m.one_start)*1.3)
+        ax[0].set_xlabel(r'time-constant separation $\tau_2/\tau_1$', fontsize=16)
+        ax[0].set_ylabel('gross failure rate (%)', fontsize=16)
+        ax[0].set_title('(a) Synthetic ground truth:\nremedies and their limit', fontsize=16)
+        ax[0].legend(loc='best', fontsize=11)
+    else:
+        unavailable(ax[0], '(a) Synthetic identifiability data\nnot available')
+
+    comp_cols = ['source', 'residual_term']
+    c = comp[comp_cols].copy() if comp is not None and set(comp_cols).issubset(comp.columns) else pd.DataFrame(columns=comp_cols)
+    if len(c):
+        c['residual_term'] = pd.to_numeric(c.residual_term, errors='coerce')
+        c = c.dropna(subset=['source', 'residual_term']).drop_duplicates('source')
+        c = c[c.source.isin(kk_pass_sources)]
+    enum_cols = ['source', 'Ea_min_over_labels', 'Ea_max_over_labels', 'Ea_Rct_canonical']
+    e = enum[enum_cols].copy() if enum is not None and set(enum_cols).issubset(enum.columns) else pd.DataFrame(columns=enum_cols)
+    if len(e):
+        for col in enum_cols[1:]:
+            e[col] = pd.to_numeric(e[col], errors='coerce')
+        e = e.dropna(subset=enum_cols).drop_duplicates('source')
+        e = e[e.source.isin(kk_pass_sources)]
+
+    enum_sources = set(e.source)
+    b_sources = [source for source in c.source if source in enum_sources]
+    if b_sources:
+        x = np.arange(len(b_sources)); w = .38
+        c_by_source = c.set_index('source').loc[b_sources]
+        e_by_source = e.set_index('source').loc[b_sources]
+        if len(e):
+            xs, lo, hi, canonical = [], [], [], []
+            for i, source in enumerate(b_sources):
+                row = e_by_source.loc[source]
+                xs.append(i-w/2); lo.append(row.Ea_min_over_labels)
+                hi.append(row.Ea_max_over_labels); canonical.append(row.Ea_Rct_canonical)
+            if xs:
+                ax[1].vlines(xs, lo, hi, color='indianred', lw=7, alpha=.35,
+                             label='admissible range, \nall labelings')
+                ax[1].plot(xs, canonical, 'o', color='indianred', ms=5,
+                           label='canonical labelling')
+                for xi, can, low, high in zip(xs, canonical, lo, hi):
+                    ax[1].annotate(f'{max(high-can, can-low):.1f}', (xi, high),
+                                   textcoords='offset points', xytext=(5, -5),
+                                   ha='left', fontsize=12, color='indianred')
+        bar_x = x+w/2
+        bar_y = [c_by_source.loc[source, 'residual_term'] for source in b_sources]
+        ax[1].bar(bar_x, bar_y, w*0.8, color='steelblue',
                   label='near-degenerate solutions')
-        ax[k].set_xticks(x); ax[k].set_xticklabels([SHORT.get(x, x) for x in comp.source], rotation=20, ha='right', fontsize=14)
-        ax[k].set_ylabel('$E_a(R_{ct})$ and $|\\Delta E_a|$ (kJ mol$^{-1}$)', fontsize=14)
-        ax[k].set_title('(b) Label degeneracy (exact)\nand near-degeneracy (measured)', fontsize=14)
-        ax[k].legend(fontsize=10); k += 1
-        ax[k].bar(x-w/2, comp.Ea_Rohm_reference, w, label='reference pipeline', color='seagreen')
-        ax[k].bar(x+w/2, comp.Ea_Rohm_naive_raw, w, label='alternative pipeline', color='darkkhaki')
-        ax[k].set_xticks(x); ax[k].set_xticklabels([SHORT.get(x, x) for x in comp.source], rotation=30, ha='right', fontsize=14)
-        ax[k].set_ylabel('$E_a(R_{ohm})$ (kJ mol$^{-1}$)', fontsize=14)
-        ax[k].set_title('(c) Ohmic channel is pipeline-invariant', fontsize=14); ax[k].legend(fontsize=10); k += 1
+        ax[1].set_xticks(x)
+        ax[1].set_xticklabels([SHORT.get(source, source) for source in b_sources],
+                              rotation=20, ha='right', fontsize=16)
+        ax[1].tick_params(axis='y', labelsize=16)
+        ax[1].set_ylabel('$E_a(R_{ct})$ and $|\\Delta E_a|$ (kJ mol$^{-1}$)', fontsize=16)
+        # ax[1].set_title('(b) Label and near-degeneracy\n(KK-pass sources)')
+        ax[1].set_title('(b) Label degeneracy (exact)\nand near-degeneracy (measured)', fontsize=16)
+        if ax[1].get_legend_handles_labels()[0]:
+            ax[1].legend(loc='best', fontsize=11)
+    else:
+        unavailable(ax[1], '(b) No complete label, residual')
+
+    rohms = ['source', 'Ea_Rohm_reference', 'Ea_Rohm_naive_raw']
+    r = comp[rohms].copy() if comp is not None and set(rohms).issubset(comp.columns) else pd.DataFrame()
+    if len(r):
+        for col in rohms[1:]:
+            r[col] = pd.to_numeric(r[col], errors='coerce')
+        r = r.dropna(subset=rohms[1:]).drop_duplicates('source')
+        r = r[r.source.isin(kk_pass_sources)]
+    if len(r) and r[rohms[1:]].notna().any().any():
+        x = np.arange(len(r)); w = .38
+        if r.Ea_Rohm_reference.notna().any():
+            ax[2].bar(x-w/2, r.Ea_Rohm_reference, w,
+                      label='reference pipeline', color='seagreen')
+        if r.Ea_Rohm_naive_raw.notna().any():
+            ax[2].bar(x+w/2, r.Ea_Rohm_naive_raw, w,
+                      label='alternative pipeline', color='darkkhaki')
+        ax[2].set_xticks(x)
+        ax[2].set_xticklabels([SHORT.get(source, source) for source in r.source],
+                              rotation=25, ha='right', fontsize=16)
+        ax[2].set_ylabel('$E_a(R_{ohm})$ (kJ mol$^{-1}$)', fontsize=16)
+        ax[2].set_title('(c) Ohmic channel is pipeline-invariant', fontsize=16)
+        ax[2].legend(fontsize=11)
+    else:
+        unavailable(ax[2], '(c) Ohmic pipeline comparison\nnot available')
+
+    required = {'SoH', 'SoC', 'Temp', 'Rsei', 'Rct'}
+    d3 = None
+    panel_d_note = 'Published-parameter workbook\nnot available'
     if have(LGM50_FITS):
-        d3 = pd.read_excel(LGM50_FITS, sheet_name='Sheet3')
-        d3.columns = [str(c).strip() for c in d3.columns]
-        srow = d3[(d3['SoH'] == 100) & (d3['SoC'] == 95) & (d3['Temp'] == 25)].reset_index()
-        idx = np.arange(len(srow))
-        ax[k].bar(idx-0.18, srow['Rsei']*1e3, 0.36, label='$R_{sei}$')
-        ax[k].bar(idx+0.18, srow['Rct']*1e3, 0.36, label='$R_{ct}$')
-        ax[k].set_xticks(idx); ax[k].set_xticklabels([f'{i+1}' for i in idx], fontsize=14)
-        ax[k].set_xlabel('cell', fontsize=14); ax[k].set_ylabel('fitted R (mΩ)', fontsize=14)
-        ax[k].set_title('(d) Label swaps in a\npublished parameter set', fontsize=14); ax[k].legend(fontsize=10)
+        try:
+            d3 = pd.read_excel(LGM50_FITS, sheet_name='Sheet3')
+            d3.columns = [str(col).strip() for col in d3.columns]
+        except (OSError, ValueError) as exc:
+            panel_d_note = f'Could not read published-parameter workbook:\n{exc}'
+            print(f"[Fig 4(d)] {panel_d_note}")
+    if d3 is not None and required.issubset(d3.columns):
+        srow = d3[(d3.SoH == 100) & (d3.SoC == 95) & (d3.Temp == 25)].copy()
+        for col in ['Rsei', 'Rct']:
+            srow[col] = pd.to_numeric(srow[col], errors='coerce')
+        srow = srow.dropna(subset=['Rsei', 'Rct'])
+        if len(srow):
+            idx = np.arange(len(srow)); w = .36
+            ax[3].bar(idx-w/2, srow.Rsei*1e3, w, label='$R_{sei}$')
+            ax[3].bar(idx+w/2, srow.Rct*1e3, w, label='$R_{ct}$')
+            ax[3].set_xticks(idx); ax[3].set_xticklabels([f'{i+1}' for i in idx], fontsize=16)
+            ax[3].set_xlabel('Cell', fontsize=16); ax[3].set_ylabel('fitted R (mΩ)', fontsize=16)
+            ax[3].set_title('(d) Label swaps in a\npublished parameter set', fontsize=16)
+            ax[3].legend(fontsize=12)
+        else:
+            unavailable(ax[3], '(d) No rows for SoH=100, SoC=95,\nTemp=25 in the workbook')
+    elif d3 is not None:
+        unavailable(ax[3], '(d) Workbook is missing required columns:\n' +
+                    ', '.join(sorted(required - set(d3.columns))))
+    else:
+        unavailable(ax[3], '(d) ' + panel_d_note)
+
+    if not have(LGM50_FITS):
+        print("[Fig 4] panel (d) marked unavailable; other available panels will be saved.")
     save(fig, 'Fig4_identifiability.png')
     save(fig, 'Fig4_identifiability.pdf')
+
+
 ########################
 
 ############################
@@ -1326,7 +1505,8 @@ def fig8():
 if __name__ == '__main__':
     # Fig. 8 of the manuscript (workflow) is drawn by 07b_workflow_figure.py; fig8() above is
     # the earlier schematic (Fig8_workflow.png) and is no longer part of the run.
-    for fn in [fig1, fig2v2, fig2, fig3v2, fig3, fig4, fig5, fig6, fig7]:
+    # [fig1, fig2v2, fig2, fig3v2, fig3, fig4, fig5, fig6, fig7]
+    for fn in [fig1, fig2v2, fig2, fig3v2, fig4, fig5, fig6, fig7]:
         try:
             fn()
         except Exception as e:

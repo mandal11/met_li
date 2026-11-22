@@ -22,11 +22,12 @@ AUTO_DISCOVER = True
 
 INHOUSE_HE2_RAW   = "data/inhouse/LGHE2_S1.xlsx"
 INHOUSE_VTC5A_RAW = "data/inhouse/all_temp_sony_S1.xlsx"
-# INHOUSE_AMS_RAW   = "data/inhouse/ams"             # folder with (T)_AMS*.xlsx
+INHOUSE_AMS_RAW   = "data/inhouse/ams"             # folder with (T)_AMS*.xlsx
 SIXT_FILE_A_RAW   = "data/inhouse/Samsung_S2a.xlsx"    # 6-temperature file A
 SIXT_FILE_B_RAW   = "data/inhouse/Panasonic_S2b.xlsx"  # 6-temperature file B
 SAMSUNG26J_RAW    = "data/corpora/impedance_S5.csv"
 LGM50_FITS_RAW    = "data/LGM50_SoH_S4/all_ecm_SoH_temp_S4.xlsx"
+# Sony_VTC6_RAW     = "data/Sony_VTC6/EISGALV_100"
 OUT_RAW           = "out"
 
 # --------------------------- resolution machinery --------------------------

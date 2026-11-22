@@ -26,7 +26,8 @@ for f, lab in [(INHOUSE_HE2, 'in-house HE2'), (INHOUSE_VTC5A, 'in-house VTC5A')]
             print(f"  [skip] {lab} {t}C: {e}"); continue
         kk = linkk(fr, z); vp = 0.5*np.abs(z).max()*1e3
         print(f"  {lab:16s} {t:>4s}C  KKmax={kk:5.2f}%  Vpeak={vp:6.1f} mV")
-        rows.append(dict(source=lab, T=t, KK=kk, Vpeak_mV=vp))
+        rows.append(dict(source=lab, T=t, KK=kk, KK_status='pass' if kk < 2 else 'fail',
+                         Vpeak_mV=vp))
 
 print("== 6-temperature files (stored in mOhm, -Im positive) ==")
 for f, lab in [(SIXT_FILE_A, '6-T file A'), (SIXT_FILE_B, '6-T file B')]:
@@ -39,7 +40,8 @@ for f, lab in [(SIXT_FILE_A, '6-T file A'), (SIXT_FILE_B, '6-T file B')]:
             print(f"  [skip] {lab} {t}C: {e}"); continue
         kk = linkk(fr, z)
         print(f"  {lab:16s} {t:>4s}C  KKmax={kk:5.2f}%")
-        rows.append(dict(source=lab, T=t, KK=kk, Vpeak_mV=float('nan')))
+        rows.append(dict(source=lab, T=t, KK=kk, KK_status='pass' if kk < 2 else 'fail',
+                         Vpeak_mV=float('nan')))
 
 print("== reference corpus (mid-state per temperature) ==")
 pkl = os.path.join(OUT, 'unisa_parsed.pkl')
@@ -49,7 +51,8 @@ if os.path.exists(pkl):
         s = specs[len(specs)//2]
         kk = linkk(s[1], s[2]); vp = 0.15*np.abs(s[2]).max()*1e3
         print(f"  UNISA {T:>4d}C  KKmax={kk:5.2f}%  Vpeak={vp:5.1f} mV")
-        rows.append(dict(source='UNISA', T=T, KK=kk, Vpeak_mV=vp))
+        rows.append(dict(source='UNISA', T=T, KK=kk, KK_status='pass' if kk < 2 else 'fail',
+                         Vpeak_mV=vp))
     # triplicate repeatability of the corpus (quoted in section 3.3): coefficient of variation of
     # the three repeats of Z'(0.1 Hz) for every state and temperature
     rep = []

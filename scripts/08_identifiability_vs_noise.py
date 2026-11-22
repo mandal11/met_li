@@ -131,6 +131,14 @@ def _run_cached(tasks, cache):
 
 def _figure(spec, ref, rows, camp, fig_dir):
     import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
+    plt.rcParams.update({
+        'font.family': 'Times New Roman',
+        'font.serif': ['Times New Roman', 'Times', 'Liberation Serif', 'DejaVu Serif'],
+        'mathtext.fontset': 'stix',
+        'mathtext.rm': 'Times New Roman',
+        'mathtext.it': 'Times New Roman:italic',
+        'mathtext.bf': 'Times New Roman:bold',
+    })
     fig, ax = plt.subplots(1, 3, figsize=(14, 4.0))
     # (a) what the added noise looks like on a measured spectrum (mid state, coldest T)
     s = min((x for x in spec if x['ridx'] == MID), key=lambda x: x['T'])
@@ -139,8 +147,8 @@ def _figure(spec, ref, rows, camp, fig_dir):
     ax[0].plot(s['z'].real*1e3, -s['z'].imag*1e3, 'k.-', ms=4, lw=.8, label='measured')
     ax[0].plot(zn.real*1e3, -zn.imag*1e3, 'o', ms=3.5, mfc='none', color='tab:red',
                label='measured + 2 % noise')
-    ax[0].set_xlabel("$Z'$ (m$\\Omega$)"); ax[0].set_ylabel("$-Z''$ (m$\\Omega$)")
-    ax[0].set_title(f"(a) State {MID}, {s['T']} °C: one 2 % realization"); ax[0].legend(fontsize=8)
+    ax[0].set_xlabel("$Z'$ (m$\\Omega$)", fontsize=16); ax[0].set_ylabel("$-Z''$ (m$\\Omega$)", fontsize=16)
+    ax[0].set_title(f"(a) State {MID}, {s['T']} °C: one 2 % realization", fontsize=16); ax[0].legend(fontsize=12, loc='best')
     ax[0].grid(alpha=.3)
     # (b) gross-failure rate by measured separation and noise level
     d = pd.DataFrame(rows)
@@ -149,10 +157,10 @@ def _figure(spec, ref, rows, camp, fig_dir):
         g = d[d.noise_pct == lev].groupby('bin', observed=False)['gross_failure'].mean()*100
         ax[1].plot(range(len(SEP_LABELS)), g.reindex(SEP_LABELS).values, mk+'-', ms=4,
                    label=f'{lev:g} % noise')
-    ax[1].set_xticks(range(len(SEP_LABELS))); ax[1].set_xticklabels(SEP_LABELS)
-    ax[1].set_xlabel('measured $\\tau_2/\\tau_1$ of the reference fit')
-    ax[1].set_ylabel('gross failures (% of refits)')
-    ax[1].set_title('(b) Measured spectra, all retained states'); ax[1].legend(fontsize=8)
+    ax[1].set_xticks(range(len(SEP_LABELS))); ax[1].set_xticklabels(SEP_LABELS, fontsize=16)
+    ax[1].set_xlabel('measured $\\tau_2/\\tau_1$ of the reference fit', fontsize=16)
+    ax[1].set_ylabel('gross failures (% of refits)', fontsize=16)
+    ax[1].set_title('(b) Measured spectra, all retained states', fontsize=16); ax[1].legend(fontsize=12, loc='best')
     ax[1].grid(alpha=.3)
     # (c) E_a of the mid state from complete noisy campaigns: R_ct and the swap-invariant sum
     c = pd.DataFrame(camp)
@@ -165,10 +173,12 @@ def _figure(spec, ref, rows, camp, fig_dir):
         ax[2].axhline(ref['Ea_' + name], color=col, ls='--', lw=1, label=f'{lab}: unperturbed data')
         ax[2].axhspan(ref['Ea_' + name] - ref['CI_' + name], ref['Ea_' + name] + ref['CI_' + name], color=col,
                       alpha=.08)
-    ax[2].set_xticks(pos); ax[2].set_xticklabels([f'{lev:g}' for lev in NOISES])
-    ax[2].set_xlabel('added noise (% of |Z|)'); ax[2].set_ylabel('$E_a$ (kJ mol$^{-1}$)')
-    ax[2].set_title(f'(c) State {MID}: {len(c[c.noise_pct == NOISES[0]])} campaigns per level')
-    ax[2].legend(fontsize=8, loc='upper left'); ax[2].grid(alpha=.3)
+    ax[2].set_xticks(pos); ax[2].set_xticklabels([f'{lev:g}' for lev in NOISES], fontsize=16)
+    ax[2].set_xlabel('added noise (% of |Z|)', fontsize=16); ax[2].set_ylabel('$E_a$ (kJ mol$^{-1}$)', fontsize=16)
+    ax[2].set_title(f'(c) State {MID}: {len(c[c.noise_pct == NOISES[0]])} campaigns per level', fontsize=16)
+    ax[2].legend(fontsize=12, loc='best'); ax[2].grid(alpha=.3)
+    for axis in ax:
+        axis.tick_params(axis='both', which='major', labelsize=16)
     fig.tight_layout()
     os.makedirs(fig_dir, exist_ok=True)
     for ext in ['png', 'pdf']:
