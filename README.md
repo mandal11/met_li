@@ -74,3 +74,7 @@ Mattia, L., Beiranvand, H., Liserre, M., and Zamboni, W. (2025). *UNISA-CAU Ther
 The UNISA dataset is distributed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). See `LICENSE` for the terms that apply to the repository code.
 
 When citing the analysis code, include the repository URL and the release tag or commit used for the analysis.
+### Supplementary file
+
+The supplementary file accompanying the manuscript contains the fitted equivalent circuit model (ECM) parameters and the Kramers–Kronig (KK) audit results used to assess the consistency of the measured impedance spectra.
+
